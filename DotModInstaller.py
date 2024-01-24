@@ -14,8 +14,12 @@ def likelypaths():
     # Produce a list of likely places the game would be installed
 
     # Check drive letters C-Z and generate a list of those that exist on this system
-    drives = [ chr(x) + ":" for x in range(ord("C"),ord("Z"))
-            if os.path.exists(chr(x) + ":/") ]
+    drives = [ f"{chr(x)}:" for x in range(ord("C"),ord("Z"))
+            if os.path.exists(chr(x) + ":" + os.sep)  ]
+    if os.path.exists("/cygdrive"):
+        drives.extend( [os.path.join(os.sep,"cygdrive", chr(x)) for x in range(ord("c"),ord("z"))
+                    if os.path.exists(os.path.join(os.sep,"cygdrive", chr(x)))]
+                    )
     paths = [
         "Program Files (x86)",
         "Steam",
@@ -26,12 +30,12 @@ def likelypaths():
         "Games",
         "",
         ]
-    suffix = "steamapps/common/Cold Waters"
+    suffix = os.path.join("steamapps","common","Cold Waters")
 
     for drive in drives:
-      for path in paths:
-        for middle in middles:
-          yield f"{drive}/{path}/{middle}/{suffix}"
+        for path in paths:
+            for middle in middles:
+                yield os.path.join(drive, path, middle, suffix)
 
 if __name__ == "__main__":
     main()
@@ -39,9 +43,11 @@ if __name__ == "__main__":
 # Good programming practices
 def main():
     config = configparser.ConfigParser()
-    config.read("%s/Installer.ini" % (os.getcwd()))
+    config_file_path = os.path.join(os.getcwd(), "Installer.ini")
+    with open(config_file_path, 'r') as config_file:
+        config.read_file(config_file)
     mod_name = config["Settings"]["mod_name"]
-    mod = "%s/ColdWaters_Data" % (os.getcwd())
+    mod = os.path.join(os.getcwd(), "ColdWaters_Data")
 
     install_directory = None
     # Auto-locate; Simply checks likely locations for the game to be installed
